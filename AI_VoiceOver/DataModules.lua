@@ -432,32 +432,114 @@ setmetatable(getFileNameForEvent,
         end
     })
 
+-- Quest audio may be shared (`{questID}-accept`) or per giver (`{questID}-accept-{npcID}`).
+local QUEST_EVENT_SOURCE = {
+    [Enums.SoundEvent.QuestAccept] = true,
+    [Enums.SoundEvent.QuestProgress] = true,
+    [Enums.SoundEvent.QuestComplete] = true,
+}
+local QUEST_GIVER_NAME_TABLES = {
+    "NPCNameLookupByNPCID",
+    "ObjectNameLookupByObjectID",
+    "ItemNameLookupByItemID",
+}
+
+local function trimName(name)
+    if type(name) ~= "string" then
+        return
+    end
+    return (string.gsub(name, "^%s*(.-)%s*$", "%1"))
+end
+
+local function addUniqueID(list, seen, id)
+    id = tonumber(id)
+    if not id or seen[id] then
+        return
+    end
+    seen[id] = true
+    table.insert(list, id)
+end
+
+-- Speaker ids first (GUID, then name). Used to build `{questID}-{source}-{npcID}`.
+local function collectSpeakerIDs(soundData)
+    local ids, seen = {}, {}
+
+    if soundData.unitGUID and Utils.GetGUIDType and Utils.GetIDFromGUID then
+        local guidType = Utils:GetGUIDType(soundData.unitGUID)
+        if guidType and Enums.GUID:CanHaveID(guidType) then
+            addUniqueID(ids, seen, Utils:GetIDFromGUID(soundData.unitGUID))
+        end
+    end
+
+    local speakerName = trimName(soundData.name)
+    if speakerName and speakerName ~= "" and speakerName ~= "Unknown Name" then
+        for _, module in DataModules:GetModules() do
+            for _, tableName in ipairs(QUEST_GIVER_NAME_TABLES) do
+                local nameByID = module[tableName]
+                if nameByID then
+                    for id, name in pairs(nameByID) do
+                        if trimName(name) == speakerName then
+                            addUniqueID(ids, seen, id)
+                        end
+                    end
+                end
+            end
+        end
+    end
+
+    return ids, seen
+end
+
+local function lookupSoundLength(data, fileName)
+    local genderedName = DataModules:AddPlayerGenderToFilename(fileName)
+    local length = data[genderedName]
+    if length then
+        return genderedName, length
+    end
+    length = data[fileName]
+    if length then
+        return fileName, length
+    end
+end
+
 ---@param soundData SoundData
 ---@return boolean found Whether the sound is found and can be played
 function DataModules:PrepareSound(soundData)
-    soundData.fileName = getFileNameForEvent[soundData.event](soundData)
+    local baseName = getFileNameForEvent[soundData.event](soundData)
 
-    if soundData.fileName == nil then
+    if baseName == nil then
         return false
+    end
+
+    local candidates = { baseName }
+    if QUEST_EVENT_SOURCE[soundData.event] then
+        local speakerIDs, seen = collectSpeakerIDs(soundData)
+        candidates = {}
+        for _, npcID in ipairs(speakerIDs) do
+            table.insert(candidates, format("%s-%d", baseName, npcID))
+        end
+        local _, giverID = self:GetQuestLogQuestGiverTypeAndID(soundData.questID)
+        giverID = tonumber(giverID)
+        if giverID and not seen[giverID] then
+            table.insert(candidates, format("%s-%d", baseName, giverID))
+        end
+        table.insert(candidates, baseName)
     end
 
     for _, module in self:GetModules() do
         local data = module.SoundLengthLookupByFileName
         if data then
-            local playerGenderedFileName = DataModules:AddPlayerGenderToFilename(soundData.fileName)
-            local length = data[playerGenderedFileName]
-            if length then
-                soundData.fileName = playerGenderedFileName
-            else
-                length = data[soundData.fileName]
-            end
-            if length then
-                soundData.filePath = format([[Interface\AddOns\%s\%s]], module.METADATA.AddonName,
-                    module.GetSoundPath and module:GetSoundPath(soundData.fileName, soundData.event) or
-                    soundData.fileName)
-                soundData.length = length
-                soundData.module = module
-                return true
+            for _, candidate in ipairs(candidates) do
+                local fileName, length = lookupSoundLength(data, candidate)
+                if fileName and length then
+                    soundData.fileName = fileName
+                    soundData.filePath = format([[Interface\AddOns\%s\%s]], module.METADATA.AddonName,
+                        module.GetSoundPath and module:GetSoundPath(fileName, soundData.event) or
+                        fileName)
+                    soundData.length = length
+                    soundData.module = module
+                    return true
+                end
             end
         end
     end
