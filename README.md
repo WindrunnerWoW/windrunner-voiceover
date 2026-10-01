@@ -1,5 +1,7 @@
 # VoiceOver for World of Warcraft
 
+Version 2.0.0 supports the WoW 1.12 client, including Turtle WoW.
+
 ## v2: https://allvoice.ai
 Contribute voices on [allvoice.ai](https://allvoice.ai) so I can give each NPC a unique AI voicemodel to power their dialog. The top rated voice for each NPC will be used. 
 
@@ -78,12 +80,13 @@ The following language codes are supported:
 The generated TTS audio files will be saved in the sounds folder, with separate subfolders for quests and gossip. Lookup tables and sound length tables will also be generated for use in the addon. 
 
 ## Addon Install
-Copy over the `generated` folder to the VoiceOverData_Vanilla folder, then the VoiceOver and VoiceOverData_Vanilla folder to `World of Warcraft/_classic_era_/Interface/AddOns`. Alternatively, you can syslink instead of copying for faster development.
+Copy the `generated` folder into `AI_VoiceOverData_Vanilla`, then copy `AI_VoiceOver` and `AI_VoiceOverData_Vanilla` into your WoW 1.12 client's `Interface/AddOns` folder. When installing from this repository, copy `AI_VoiceOver_1.12.toc` to `AI_VoiceOver.toc` inside the addon folder; release packages include this file. You can also symlink the folders for faster development.
 Example syslink:
 ```bash
 export WOW_DIR=PATH_OF_YOUR_WOW_DIR
-ln -s ./VoiceOver "$WOW_DIR/_classic_era_/Interface/AddOns"
-ln -s ./VoiceOver_Vanilla "$WOW_DIR/_classic_era_/Interface/AddOns"
+cp AI_VoiceOver/AI_VoiceOver_1.12.toc AI_VoiceOver/AI_VoiceOver.toc
+ln -s ./AI_VoiceOver "$WOW_DIR/Interface/AddOns"
+ln -s ./AI_VoiceOverData_Vanilla "$WOW_DIR/Interface/AddOns"
 ```
 ## Contributing
 If you want to contribute to this project, please feel free to open an issue or submit a pull request.

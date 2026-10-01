@@ -8,9 +8,11 @@
     <Include file="FuzzySearch.lua"/>
     <Include file="SoundQueue.lua"/>
     <Include file="SoundQueueUI.lua"/>
+    <Include file="CinematicUI.lua"/>
     <Include file="QuestOverlayUI.lua"/>
     <Include file="DataModules.lua"/>
     <Include file="VoiceOver.lua"/>
 
     <Include file="Compatibility.lua"/>
+    <Include file="CinematicPortrait.lua"/>
 </Ui>

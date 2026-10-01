@@ -15,6 +15,7 @@ local defaults = {
             FrameStrata = "HIGH",
             HidePortrait = false,
             HideFrame = false,
+            QueueExpanded = false,
         },
         Audio = {
             GossipFrequency = Enums.GossipFrequency.OncePerQuestNPC,
