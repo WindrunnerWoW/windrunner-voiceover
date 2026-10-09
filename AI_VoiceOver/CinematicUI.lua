@@ -84,6 +84,10 @@ local function SoundTitle(soundData)
     return soundData.title or (Enums.SoundEvent:IsGossipEvent(soundData.event) and "Conversation" or "VoiceOver")
 end
 
+local function UpcomingQueueSize()
+    return math.max(0, SoundQueue:GetQueueSize() - 1)
+end
+
 local function QuestIcon(texture, soundData)
     local event = soundData.event
     local name = "SoundQueueBulletGossip"
@@ -295,7 +299,7 @@ Layout = function()
     -- The two-pixel seam overlaps the texture's transparent edge padding.
     frame.queue:SetPoint("TOPLEFT", frame.background, "BOTTOMLEFT", config.HidePortrait and 0 or QUEUE_LEFT - PANEL_LEFT, 2)
     frame.queue:SetPoint("TOPRIGHT", frame.background, "BOTTOMRIGHT", 0, 2)
-    local rows = config.QueueExpanded and math.min(MAX_ROWS, SoundQueue:GetQueueSize()) or 0
+    local rows = config.QueueExpanded and math.min(MAX_ROWS, UpcomingQueueSize()) or 0
     local queueHeight = math.max(1, rows * ROW_HEIGHT + 4)
     frame.queue:SetHeight(queueHeight)
     frame.queue.background:SetAllPoints()
@@ -369,7 +373,7 @@ function SoundQueueUI:CreateButton(i)
         self.textWidget:SetTextColor(0.94, 0.92, 0.86)
         QuestIcon(self.iconWidget, self.soundData)
         self.remove:SetShown(self.hovered and (not isCurrent or SoundQueue:CanBePaused()))
-        self.rule:SetShown(self:GetID() < math.min(MAX_ROWS, SoundQueue:GetQueueSize()))
+        self.rule:SetShown(self:GetID() < math.min(MAX_ROWS, UpcomingQueueSize()))
         self:SetAlpha(isCurrent and 1 or 0.85)
     end
     button:HookScript("OnEnter", function(self)
@@ -391,11 +395,12 @@ function SoundQueueUI:UpdateSoundQueueDisplay()
     self.frame.container.icon:SetShown(current ~= nil)
     if current then QuestIcon(self.frame.container.icon, current) end
     self.frame.portrait:Configure(current)
-    for i = 1, math.min(MAX_ROWS, SoundQueue:GetQueueSize()) do
+    local visibleRows = math.min(MAX_ROWS, UpcomingQueueSize())
+    for i = 1, visibleRows do
         local button = self.frame.container.buttons[i] or self:CreateButton(i)
-        button:Configure(SoundQueue.sounds[i])
+        button:Configure(SoundQueue.sounds[i + 1])
     end
-    for i = SoundQueue:GetQueueSize() + 1, getn(self.frame.container.buttons) do
+    for i = visibleRows + 1, getn(self.frame.container.buttons) do
         self.frame.container.buttons[i]:Configure(nil)
     end
     local expanded = Addon.db.profile.SoundQueueUI.QueueExpanded
