@@ -150,10 +150,28 @@ local GeneralTab =
                         SoundQueueUI.frame:Reset()
                     end,
                 },
-                LineBreak1 = { type = "description", name = "", order = 3 },
+                CinematicStyle = {
+                    type = "select",
+                    order = 3,
+                    name = "Frame Style",
+                    desc = "Changes the voiceover frame's theme without changing its size.",
+                    values = {
+                        classic = "Classic Frame",
+                        briefing = "Warcraft Briefing",
+                        journal = "Parchment Journal",
+                    },
+                    get = function(info)
+                        return Addon.db.profile.SoundQueueUI.CinematicStyle or "classic"
+                    end,
+                    set = function(info, value)
+                        Addon.db.profile.SoundQueueUI.CinematicStyle = value
+                        SoundQueueUI:RefreshConfig()
+                    end,
+                },
+                LineBreak1 = { type = "description", name = "", order = 4 },
                 FrameStrata = {
                     type = "select",
-                    order = 5,
+                    order = 6,
                     name = "Frame Strata",
                     desc = "Changes the \"depth\" of the frame, determining which other frames will it overlap or fall behind.",
                     values = FRAME_STRATAS,
@@ -171,7 +189,7 @@ local GeneralTab =
                 },
                 FrameScale = {
                     type = "range",
-                    order = 4,
+                    order = 5,
                     name = "Frame Scale",
                     softMin = 0.5,
                     softMax = 2,
@@ -190,10 +208,10 @@ local GeneralTab =
                         end
                     end,
                 },
-                LineBreak2 = { type = "description", name = "", order = 6 },
+                LineBreak2 = { type = "description", name = "", order = 7 },
                 HidePortrait = {
                     type = "toggle",
-                    order = 7,
+                    order = 8,
                     name = "Hide NPC Portrait",
                     desc = "Talking NPC portrait will not appear when voice over audio is played.\n\n" ..
                             Utils:ColorizeText("This might be useful when using other addons that replace the dialog experience, such as " ..
@@ -207,7 +225,7 @@ local GeneralTab =
                 },
                 HideFrame = {
                     type = "toggle",
-                    order = 8,
+                    order = 9,
                     name = "Hide Entirely",
                     desc = "Play voiceovers without ever displaying the frame.",
                     disabled = false,

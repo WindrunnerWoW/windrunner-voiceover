@@ -9,6 +9,39 @@ local RIGHT_PADDING = 8
 local TEXTURES = [[Interface\AddOns\AI_VoiceOver\Textures\]]
 local InitPortrait = SoundQueueUI.InitPortrait
 local Layout
+local STYLES = {
+    classic = {
+        panel = "CinematicPanelClassic",
+        nameY = -22,
+        titleY = -45,
+        nameColor = { 1, 0.82, 0.56 },
+        titleColor = { 1, 0.76, 0.08 },
+        queueColor = { 1, 0.76, 0.08 },
+        ruleColor = { 0.48, 0.36, 0.19, 0.25 },
+    },
+    briefing = {
+        panel = "CinematicPanelBriefing",
+        nameY = -14,
+        titleY = -45,
+        nameColor = { 1, 0.82, 0.5 },
+        titleColor = { 1, 0.73, 0.18 },
+        queueColor = { 1, 0.8, 0.36 },
+        ruleColor = { 0.55, 0.3, 0.12, 0.34 },
+    },
+    journal = {
+        panel = "CinematicPanelJournal",
+        nameY = -22,
+        titleY = -45,
+        nameColor = { 0.29, 0.16, 0.07 },
+        titleColor = { 0.24, 0.12, 0.04 },
+        queueColor = { 0.29, 0.16, 0.07 },
+        ruleColor = { 0.42, 0.27, 0.12, 0.3 },
+    },
+}
+
+local function ActiveStyle()
+    return STYLES[Addon.db.profile.SoundQueueUI.CinematicStyle] or STYLES.classic
+end
 
 local function SetGlyph(texture, name)
     texture:SetTexture(TEXTURES .. "Cinematic" .. name)
@@ -38,6 +71,13 @@ local function AddPanel(parent)
     panel.middle:SetPoint("TOPLEFT", panel.left, "TOPRIGHT")
     panel.middle:SetPoint("BOTTOMRIGHT", panel.right, "BOTTOMLEFT")
     return panel
+end
+
+local function SetPanelStyle(panel, style)
+    local path = TEXTURES .. style.panel
+    panel.left:SetTexture(path)
+    panel.middle:SetTexture(path)
+    panel.right:SetTexture(path)
 end
 
 local function Tooltip(button, text)
@@ -269,6 +309,7 @@ Layout = function()
     if not frame or not frame.portrait or frame.layingOut then return end
     frame.layingOut = true
     local config = Addon.db.profile.SoundQueueUI
+    local style = ActiveStyle()
     local left = config.HidePortrait and 16 or 88
     local minWidth = config.HidePortrait and 220 or 280
     -- Old layout-cache sizes must not restore the previous fixed 340 width.
@@ -282,10 +323,10 @@ Layout = function()
     frame.background:SetPoint("TOPRIGHT", 0, -PANEL_TOP)
     frame.background:SetHeight(PANEL_HEIGHT)
     container.name:ClearAllPoints()
-    container.name:SetPoint("TOPLEFT", left, -22)
+    container.name:SetPoint("TOPLEFT", left, style.nameY)
     container.name:SetWidth(math.max(1, width - left - 88 - RIGHT_PADDING))
     container.title:ClearAllPoints()
-    container.title:SetPoint("TOPLEFT", left + 20, -45)
+    container.title:SetPoint("TOPLEFT", left + 20, style.titleY)
     container.title:SetWidth(math.max(1, width - left - 108 - RIGHT_PADDING))
     container.icon:ClearAllPoints()
     container.icon:SetPoint("TOPLEFT", left, -46)
@@ -328,6 +369,11 @@ end
 
 function SoundQueueUI:RefreshConfig()
     local config = Addon.db.profile.SoundQueueUI
+    local style = ActiveStyle()
+    SetPanelStyle(self.frame.background, style)
+    SetPanelStyle(self.frame.queue.background, style)
+    self.frame.container.name:SetTextColor(style.nameColor[1], style.nameColor[2], style.nameColor[3])
+    self.frame.container.title:SetTextColor(style.titleColor[1], style.titleColor[2], style.titleColor[3])
     self.frame.portrait:SetShown(not config.HidePortrait)
     self.frame.mover:SetShown(not config.LockFrame)
     self.frame.resizer:SetShown(not config.LockFrame)
@@ -370,7 +416,9 @@ function SoundQueueUI:CreateButton(i)
         local isCurrent = self.soundData == SoundQueue:GetCurrentSound()
         self:EnableMouse(not isCurrent or SoundQueue:CanBePaused())
         self.textWidget:SetText(SoundTitle(self.soundData))
-        self.textWidget:SetTextColor(0.94, 0.92, 0.86)
+        local style = ActiveStyle()
+        self.textWidget:SetTextColor(style.queueColor[1], style.queueColor[2], style.queueColor[3])
+        self.rule:SetVertexColor(style.ruleColor[1], style.ruleColor[2], style.ruleColor[3], style.ruleColor[4])
         QuestIcon(self.iconWidget, self.soundData)
         self.remove:SetShown(self.hovered and (not isCurrent or SoundQueue:CanBePaused()))
         self.rule:SetShown(self:GetID() < math.min(MAX_ROWS, UpcomingQueueSize()))

@@ -13,6 +13,7 @@ local defaults = {
             LockFrame = false,
             FrameScale = 0.7,
             FrameStrata = "HIGH",
+            CinematicStyle = "classic",
             HidePortrait = false,
             HideFrame = false,
             QueueExpanded = false,
